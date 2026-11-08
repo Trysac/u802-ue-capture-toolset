@@ -2,12 +2,12 @@
 
 ## Objective
 
-Pure core and unreal adapter of an Unreal MCP toolset for reproducible captures with JSON sidecars, bug evidence and Markdown contact sheets.
+Provide reproducible Unreal Engine 5.8 captures for agents, each with a JSON sidecar recording camera, map, quality preset and git commit, plus Markdown bug reports and contact sheets. The core is testable without Unreal.
 
 ## Scope
 
-- In scope: the public API documented in [README.md](../README.md), typed and tested.
-- Out of scope: anything that needs runtime dependencies or I/O without an accepted ADR.
+- In scope: resolution parsing, unique time-sortable capture paths, sidecars, reading git HEAD without running git, scanning logs for errors, Markdown rendering, and a thin adapter over the Unreal Python API that takes the `unreal` module as an argument.
+- Out of scope: video recording, image editing, uploads, the Unreal plugin packaging (`.uplugin`, `ToolsetDefinition`), and any in-engine testing. Adapter behaviour is verified only against a fake module.
 
 ## Timeline
 
@@ -21,6 +21,19 @@ Measured values only; a value that has not been measured stays "pending measurem
 
 | Metric | Value |
 |---|---|
-| Tokens (input / output) | pending measurement |
+| Tokens (input / output) | 342150 / 211905 |
 | Hours (human) | pending measurement |
-| Cost (USD) | pending measurement |
+| Cost (USD) | 1.2826 |
+
+## Factory run u802 (measured from API usage)
+
+| Phase | Model | Batch | Input | Output | Cache write | Cache read | Cost (USD) |
+|---|---|---|---|---|---|---|---|
+| generation | claude-sonnet-5-5 | yes | 2198 | 128000 | 0 | 5188 | 0.6427 |
+| generation | claude-sonnet-5-5 | yes | 2198 | 73403 | 0 | 5188 | 0.3697 |
+| fix-1 | claude-sonnet-5-5 | no | 8 | 731 | 15939 | 45798 | 0.0518 |
+| audit | claude-sonnet-5-5 | no | 14 | 4878 | 55575 | 184914 | 0.2062 |
+| fix-2 | claude-sonnet-5-5 | no | 0 | 0 | 0 | 0 | 0.0000 |
+| docs | claude-haiku-5-5 | no | 96644 | 4893 | 0 | 0 | 0.0121 |
+
+Total: $1.2826. Prices: Anthropic list prices.

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "image": "Captures/2026-11-08/090507-bug.png",
+  "label": "bug",
+  "map": "/Game/Maps/Arena",
+  "camera": "viewport",
+  "location": [100, 200, 300],
+  "rotation": [0, 90, 0],
+  "resolution": [1920, 1080],
+  "quality": {"sg.ShadowQuality": 3, "sg.TextureQuality": 2},
+  "git_commit": "0123456789abcdef0123456789abcdef01234567",
+  "captured_at": "2026-11-08T09:05:07",
+  "provenance": []
+}

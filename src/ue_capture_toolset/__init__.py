@@ -1,24 +1,52 @@
-"""
-Pure core and unreal adapter of an Unreal MCP toolset for reproducible captures with JSON sidecars,
-bug evidence and Markdown contact sheets.
-"""
+"""Pure core and Unreal adapter for reproducible captures with JSON sidecars."""
 
 from __future__ import annotations
 
-__all__ = ["__version__", "normalize"]
+from .adapter import (
+    BugResult,
+    Capture,
+    ListResult,
+    PairResult,
+    SeriesResult,
+    capture_bug,
+    capture_pair,
+    capture_series,
+    capture_viewport,
+    list_captures,
+    poll_capture,
+)
+from .core import (
+    CaptureError,
+    Sidecar,
+    build_bug_markdown,
+    build_contact_sheet_md,
+    capture_path,
+    parse_resolution,
+    read_git_commit,
+    recent_errors,
+)
+
+__all__ = [
+    "BugResult",
+    "Capture",
+    "CaptureError",
+    "ListResult",
+    "PairResult",
+    "SeriesResult",
+    "Sidecar",
+    "__version__",
+    "build_bug_markdown",
+    "build_contact_sheet_md",
+    "capture_bug",
+    "capture_pair",
+    "capture_path",
+    "capture_series",
+    "capture_viewport",
+    "list_captures",
+    "parse_resolution",
+    "poll_capture",
+    "read_git_commit",
+    "recent_errors",
+]
 
 __version__ = "0.1.0"
-
-
-def normalize(value: str) -> str:
-    """Return ``value`` trimmed and lower-cased.
-
-    Placeholder API created by the template: replace it with the utility's real behavior.
-
-    Raises:
-        ValueError: if ``value`` is empty or only whitespace.
-    """
-    cleaned = value.strip()
-    if not cleaned:
-        raise ValueError("value must not be empty")
-    return cleaned.lower()
