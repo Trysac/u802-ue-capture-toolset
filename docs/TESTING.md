@@ -4,25 +4,19 @@
 
 ```sh
 uv run pytest --cov=ue_capture_toolset   # tests with coverage report
-uv run python scripts/check.py      # every gate, as CI and the factory run it
+uv run python scripts/check.py           # every gate, as CI runs it
 ```
 
 ## Policy
 
-- Branch coverage of `src/ue_capture_toolset` must stay at or above 85 %; the gate fails below it.
-- Tests exercise the public API (`import ue_capture_toolset`) and assert every observable effect:
-  return values, raised exceptions and their messages.
-- Each bug fix starts with a failing test that reproduces it.
-- Tests are deterministic: no network, no wall clock, no dependence on test order.
+- Branch coverage of `src/ue_capture_toolset` must stay at or above 85 %.
+- Tests exercise the public API and assert return values and raised `CaptureError` codes.
+- Tests use no network and no wall clock; time is passed as `at=` or `clock=`.
+- Nothing in the test suite runs inside Unreal Engine.
 
-## Tiers
+## Tests that exist
 
-- Local tier (every gate run, coverage measured here): unit and property tests, plus conformance on small
-  fixtures kept in the repository.
-- CI tier: conformance that needs an external tool or a download. Mark them `@pytest.mark.conformance`; `scripts/check.py` deselects them locally
-  (unless `FABRICA_CI=1`). The CI `conformance` job sets `FABRICA_CI=1` and runs the full suite. Tools are installed
-  by the optional `ci/conformance-setup.sh` (bash, CI only; verify every download against a pinned SHA-256), and
-  tagged tests skip cleanly when their tool is missing.
+The test files are listed under `tests/` (for example `tests/test_<module>.py` per core module), with shared fixtures in `tests/conftest.py`, the fake unreal module in `tests/fakes/unreal.py`, and golden Markdown in `tests/golden/`. Their coverage matches the acceptance criteria: resolution parsing, capture path uniqueness and sorting, git reading from loose refs, packed-refs, detached HEAD and missing `.git`, log tail selection, bug and contact sheet goldens, and pair transforms on the fake.
 
 ## Layout
 

@@ -1,23 +1,7 @@
-"""Behavior tests for the public API of ue_capture_toolset."""
-
-from __future__ import annotations
-
-import pytest
-
 import ue_capture_toolset
 
 
-def test_normalize_trims_and_lowercases() -> None:
-    assert ue_capture_toolset.normalize("  Hello World ") == "hello world"
-
-
-@pytest.mark.parametrize("value", ["", "   ", "\t\n"])
-def test_normalize_rejects_blank_input(value: str) -> None:
-    with pytest.raises(ValueError, match="must not be empty"):
-        ue_capture_toolset.normalize(value)
-
-
-def test_version_is_semver() -> None:
-    parts = ue_capture_toolset.__version__.split(".")
-    assert len(parts) == 3
-    assert all(part.isdigit() for part in parts)
+def test_version_and_exports() -> None:
+    assert ue_capture_toolset.__version__ == "0.1.0"
+    for name in ue_capture_toolset.__all__:
+        assert hasattr(ue_capture_toolset, name)
