@@ -102,6 +102,9 @@ class BugResult:
     report_path: str
     error_count: int
     summary: str
+    mode: str = "editor"
+    player_location: tuple[float, float, float] | None = None
+    player_rotation: tuple[float, float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -394,12 +397,19 @@ def capture_bug(
 ) -> BugResult:
     """Capture the viewport and write a Markdown bug report next to the image.
 
+    During Play In Editor the report records ``mode: pie`` and player 0's pawn location and
+    rotation; otherwise ``mode: editor`` and only the viewport pose.
+
     Recent errors come from ``log_path`` or the newest ``Logs/*.log`` under ``saved_dir``.
     """
     level = normalize_severity(severity)
     saved = Path(saved_dir)
     log = _pick_log(saved, log_path)
     pose = _viewport_pose(ue)
+    world = compat.pie_world(ue)
+    pawn = compat.player_pawn(ue, world)
+    mode = "pie" if world is not None else "editor"
+    player = _actor_pose("player", pawn) if pawn is not None else None
     capture, sidecar = _request_shot(ue, saved, label, resolution, pose, at, clock, timeout_s)
     errors = recent_errors(read_log_tail(log)) if log is not None else []
     markdown = build_bug_markdown(
@@ -409,6 +419,8 @@ def capture_bug(
         notes=notes,
         errors=errors,
         image_link=Path(capture.image_path).name,
+        mode=mode,
+        player=(player.location, player.rotation) if player is not None else None,
     )
     report = Path(capture.image_path).with_suffix(".md")
     report.write_text(markdown, encoding="utf-8")
@@ -416,7 +428,10 @@ def capture_bug(
         capture=capture,
         report_path=str(report),
         error_count=len(errors),
-        summary=f"Bug report ({level}) with {len(errors)} recent errors: {report.name}",
+        summary=f"Bug report ({level}, {mode}) with {len(errors)} recent errors: {report.name}",
+        mode=mode,
+        player_location=player.location if player is not None else None,
+        player_rotation=player.rotation if player is not None else None,
     )
 
 

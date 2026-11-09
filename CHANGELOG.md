@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Unreal plugin `plugin/CaptureToolset/` (Python only): `CaptureTools` toolset registered in the Toolset Registry with seven documented tools (`capture_viewport`, `capture_status`, `capture_pair`, `capture_series`, `capture_bug`, `list_captures`, `build_contact_sheet_md`).
 - `mcp` module: flat parameters, JSON string results with `summary` first, errors returned as data, Saved folder taken from `unreal.Paths`, `capture_id` handles and a non-blocking `capture_status`.
 - `compat` module: prefers `UnrealEditorSubsystem`, `EditorActorSubsystem` and `LevelEditorSubsystem`, falls back to `EditorLevelLibrary`; `capture_pair` uses `set_level_viewport_camera_info` when available.
+- `capture_bug` records the mode (`editor` or `pie`); during Play In Editor it adds player 0's pawn location and rotation (`compat.pie_world` prefers `LevelEditorSubsystem.is_in_play_in_editor` and `UnrealEditorSubsystem.get_game_world`, falls back to `EditorLevelLibrary.get_game_world`; pawn via `GameplayStatics.get_player_pawn`).
+- `hide_ui: bool = True` on `capture_viewport`, `capture_pair` and `capture_series`. HighResShot does not render editor UI, and no reliable console option to suppress show-flag overlays is known, so the flag is a documented no-op pending verification in UE 5.8.
 - Adapter: `capture_viewport(camera=...)`, `capture_series(cursor=..., limit=...)` with `SeriesResult.cursor`, `cameras_with_tag`.
 - `tools/build_plugin.py` (plugin zip with the vendored package), `tests/ue_smoke.py` (in-editor check), `skill/SKILL.md`, ADR 0003.
 

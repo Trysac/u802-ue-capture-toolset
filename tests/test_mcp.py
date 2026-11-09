@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from fakes.unreal import FakeUnreal, FakeUnreal58, LevelEditorSubsystem
+from fakes.unreal import FakeUnreal, FakeUnreal58, LevelEditorSubsystem, start_pie
 
 from ue_capture_toolset import compat, mcp
 
@@ -255,3 +255,55 @@ def test_to_json_handles_plain_values() -> None:
         n: int
 
     assert mcp.to_json(Row("s", 1)) == '{"summary": "s", "n": 1}'
+
+
+def test_capture_bug_in_editor_records_editor_mode(fake: FakeUnreal) -> None:
+    data = _load(mcp.capture_bug(fake, "No PIE"))
+    assert data["mode"] == "editor"
+    assert data["player_location"] is None and data["player_rotation"] is None
+    assert "- **Mode:** editor" in data["markdown"]
+    assert "Player location" not in data["markdown"]
+
+
+@pytest.mark.parametrize("flavor", ["legacy", "ue58"])
+def test_capture_bug_in_pie_records_player_pawn(saved: Path, flavor: str) -> None:
+    ue = FakeUnreal() if flavor == "legacy" else FakeUnreal58()
+    ue.saved_dir = str(saved)
+    start_pie(ue)
+    data = _load(mcp.capture_bug(ue, "Falls in PIE", "high"))
+    assert data["mode"] == "pie"
+    assert data["player_location"] == [10.0, 20.0, 30.0]
+    assert data["player_rotation"] == [-5.0, 90.0, 0.0]
+    assert "- **Mode:** pie" in data["markdown"]
+    assert "- **Player location:** (10.00, 20.00, 30.00)" in data["markdown"]
+    assert "- **Player rotation:** (-5.00, 90.00, 0.00)" in data["markdown"]
+    assert "pie" in data["summary"]
+
+
+def test_pie_without_pawn_or_statics(fake58: FakeUnreal58, saved: Path) -> None:
+    start_pie(fake58)
+    fake58.pawn = None
+    data = _load(mcp.capture_bug(fake58, "Spectating"))
+    assert data["mode"] == "pie" and data["player_location"] is None
+    assert compat.player_pawn(FakeUnreal(), None) is None
+    bare = SimpleNamespace()
+    assert compat.player_pawn(bare, object()) is None
+    assert compat.pie_world(bare) is None
+
+
+def test_pie_flag_false_wins_over_game_world(fake58: FakeUnreal58) -> None:
+    start_pie(fake58)
+    fake58.subsystems[LevelEditorSubsystem].playing = False
+    assert compat.pie_world(fake58) is None
+    assert _load(mcp.capture_bug(fake58, "x"))["mode"] == "editor"
+
+
+def test_hide_ui_is_accepted_and_changes_nothing(fake: FakeUnreal) -> None:
+    fake.add_camera("CamA", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    on = _load(mcp.capture_viewport(fake, "a", hide_ui=True))
+    off = _load(mcp.capture_viewport(fake, "b", hide_ui=False))
+    assert on["status"] == off["status"] == "pending"
+    _load(mcp.capture_pair(fake, on["capture_id"], hide_ui=False))
+    _load(mcp.capture_series(fake, "s", '["CamA"]', hide_ui=False))
+    assert all(c.startswith("HighResShot ") and "showui" not in c.lower() for c in fake.commands)
+    assert "no-op" in mcp.HIDE_UI_NOTE

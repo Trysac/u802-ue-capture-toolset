@@ -57,8 +57,13 @@ def build_bug_markdown(
     notes: str = "",
     errors: Sequence[str] = (),
     image_link: str | None = None,
+    mode: str | None = None,
+    player: tuple[tuple[float, float, float], tuple[float, float, float]] | None = None,
 ) -> str:
     """Render a bug report from a capture sidecar, recent log errors and free notes.
+
+    ``mode`` (``editor`` or ``pie``) and ``player`` (location, rotation of the player pawn) add
+    context lines when given.
 
     Raises:
         CaptureError: ``invalid_severity`` or ``input_too_large`` (notes).
@@ -77,6 +82,15 @@ def build_bug_markdown(
         f"- **Camera:** {_inline(sidecar.camera)}",
         f"- **Location:** {_triple(sidecar.location)}",
         f"- **Rotation:** {_triple(sidecar.rotation)}",
+        *([f"- **Mode:** {_inline(mode, 20)}"] if mode else []),
+        *(
+            [
+                f"- **Player location:** {_triple(player[0])}",
+                f"- **Player rotation:** {_triple(player[1])}",
+            ]
+            if player
+            else []
+        ),
         f"- **Resolution:** {width}x{height}",
         f"- **Commit:** {_inline(commit, 64)}",
         f"- **Captured at:** {_inline(sidecar.captured_at)}",

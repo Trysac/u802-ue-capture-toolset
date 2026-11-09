@@ -25,6 +25,13 @@ Capture tools return immediately with `status: "pending"`. The image appears a f
 Call `capture_status` on the next turn until `done` is `true`, and do not request the next capture
 while one is pending (two shots requested in the same frame can overwrite each other).
 
+## hide_ui
+
+`capture_viewport`, `capture_pair` and `capture_series` accept `hide_ui` (default `true`).
+`HighResShot` renders the scene without the editor's Slate UI anyway, and no reliable console option
+to suppress show-flag debug overlays (gizmos, selection outlines) has been verified, so **the flag
+currently changes nothing**. It is kept so callers do not break once it is implemented.
+
 ## capture_viewport
 
 ```json
@@ -106,12 +113,17 @@ per call: poll the capture, then call again with the returned `cursor` until it 
 ```
 
 ```json
-{"summary": "Bug report (high) with 3 recent errors: 120000-bug.md",
+{"summary": "Bug report (high, pie) with 3 recent errors: 120000-bug.md",
  "capture_id": "Captures/2026-11-08/120000-bug.png", "status": "pending", "camera": "viewport",
  "resolution": "1920x1080", "image_path": "...", "sidecar_path": "...",
  "report_path": "C:/Proj/Saved/Captures/2026-11-08/120000-bug.md", "error_count": 3,
+ "mode": "pie", "player_location": [10.0, 20.0, 30.0], "player_rotation": [-5.0, 90.0, 0.0],
  "markdown": "# Bug: Player falls through floor\n\n- **Severity:** high\n..."}
 ```
+
+`mode` is `pie` while a Play In Editor session runs; `player_location` and `player_rotation`
+(pitch, yaw, roll) are player 0's pawn, or `null` outside PIE (`mode: "editor"`) or when there is
+no pawn. The camera transform in the report is always the editor viewport pose.
 
 The report holds map, camera, transform, resolution, commit, quality preset, the last 20 `Error:`
 lines of the newest `Saved/Logs/*.log`, provenance (from `Saved/provenance.json`, if any) and notes.

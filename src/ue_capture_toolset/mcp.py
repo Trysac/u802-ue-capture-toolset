@@ -31,6 +31,10 @@ from .core.sidecar import Sidecar, load_sidecar, sidecar_path_for
 MAX_JSON_CHARS = 1_000_000
 MAX_REF_CHARS = 1000
 MAX_TIMEOUT_S = 600.0
+HIDE_UI_NOTE = (
+    "HighResShot never renders editor UI; hide_ui is a no-op until a reliable way to suppress "
+    "show-flag overlays is verified in UE 5.8"
+)
 
 
 def _plain(value: Any) -> Any:
@@ -160,9 +164,16 @@ def _poll_one(saved: Path, ref: str, timeout_s: float) -> dict[str, Any]:
 
 
 def capture_viewport(
-    ue: Any, label: str = "viewport", resolution: str = "1920x1080", camera: str = ""
+    ue: Any,
+    label: str = "viewport",
+    resolution: str = "1920x1080",
+    camera: str = "",
+    hide_ui: bool = True,
 ) -> str:
-    """Request a HighResShot of the level viewport (or of a camera actor); returns at once."""
+    """Request a HighResShot of the level viewport (or of a camera actor); returns at once.
+
+    ``hide_ui`` is accepted but currently a no-op (see ``HIDE_UI_NOTE``).
+    """
 
     def call() -> Any:
         saved = _saved(ue)
@@ -197,8 +208,13 @@ def capture_status(ue: Any, capture: str, timeout_s: float = adapter.DEFAULT_TIM
     return _run(call)
 
 
-def capture_pair(ue: Any, before: str, label: str = "after", resolution: str = "") -> str:
-    """Request an "after" capture from the exact transform of an earlier capture."""
+def capture_pair(
+    ue: Any, before: str, label: str = "after", resolution: str = "", hide_ui: bool = True
+) -> str:
+    """Request an "after" capture from the exact transform of an earlier capture.
+
+    ``hide_ui`` is accepted but currently a no-op (see ``HIDE_UI_NOTE``).
+    """
 
     def call() -> Any:
         saved = _saved(ue)
@@ -218,8 +234,12 @@ def capture_series(
     tag: str = "",
     resolution: str = "1920x1080",
     cursor: int = 0,
+    hide_ui: bool = True,
 ) -> str:
-    """Request the capture of camera number ``cursor`` of a series; returns the next cursor."""
+    """Request the capture of camera number ``cursor`` of a series; returns the next cursor.
+
+    ``hide_ui`` is accepted but currently a no-op (see ``HIDE_UI_NOTE``).
+    """
 
     def call() -> Any:
         if bool(cameras_json) == bool(tag):
@@ -262,6 +282,9 @@ def capture_bug(
         row["summary"] = result.summary
         row["report_path"] = result.report_path
         row["error_count"] = result.error_count
+        row["mode"] = result.mode
+        row["player_location"] = result.player_location
+        row["player_rotation"] = result.player_rotation
         row["markdown"] = Path(result.report_path).read_text(encoding="utf-8")
         return row
 

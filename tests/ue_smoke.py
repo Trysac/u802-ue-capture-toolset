@@ -82,6 +82,7 @@ def main() -> None:
             )
         },
     )
+    step("api: pie world (null outside PIE)", lambda: {"pie": str(compat.pie_world(unreal))})
     step("toolset module imports", lambda: {"module": __import__("capture_toolset_mcp").__name__})
 
     queue = [

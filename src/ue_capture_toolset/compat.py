@@ -14,6 +14,8 @@ __all__ = [
     "actor_api",
     "editor_api",
     "level_api",
+    "pie_world",
+    "player_pawn",
     "set_viewport_camera",
     "transaction",
 ]
@@ -40,6 +42,29 @@ def actor_api(ue: Any) -> Any:
 def level_api(ue: Any) -> Any:
     """Return ``LevelEditorSubsystem`` (pilot an actor) or ``EditorLevelLibrary``."""
     return _subsystem(ue, "LevelEditorSubsystem") or ue.EditorLevelLibrary
+
+
+def pie_world(ue: Any) -> Any:
+    """Return the Play In Editor world while a PIE session runs, else None.
+
+    Prefers ``LevelEditorSubsystem.is_in_play_in_editor`` and
+    ``UnrealEditorSubsystem.get_game_world``; falls back to ``EditorLevelLibrary.get_game_world``.
+    """
+    check = getattr(_subsystem(ue, "LevelEditorSubsystem"), "is_in_play_in_editor", None)
+    if check is not None and not check():
+        return None
+    getter = getattr(_subsystem(ue, "UnrealEditorSubsystem"), "get_game_world", None)
+    if getter is None:
+        getter = getattr(getattr(ue, "EditorLevelLibrary", None), "get_game_world", None)
+    return getter() if getter is not None else None
+
+
+def player_pawn(ue: Any, world: Any) -> Any:
+    """Return player 0's pawn in ``world`` via ``GameplayStatics.get_player_pawn``, else None."""
+    statics = getattr(ue, "GameplayStatics", None)
+    if statics is None or world is None:
+        return None
+    return statics.get_player_pawn(world, 0)
 
 
 def set_viewport_camera(ue: Any, location: Any, rotation: Any) -> bool:

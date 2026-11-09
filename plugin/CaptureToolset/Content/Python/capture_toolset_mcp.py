@@ -25,7 +25,10 @@ class CaptureTools(unreal.ToolsetDefinition):
     @staticmethod
     @toolset_registry.tool_call
     def capture_viewport(
-        label: str = "viewport", resolution: str = "1920x1080", camera: str = ""
+        label: str = "viewport",
+        resolution: str = "1920x1080",
+        camera: str = "",
+        hide_ui: bool = True,
     ) -> str:
         """Request a screenshot of the level viewport, or from a camera actor, with a sidecar.
 
@@ -33,12 +36,14 @@ class CaptureTools(unreal.ToolsetDefinition):
             label: Short description used in the file name (for example "hero shot").
             resolution: Image size as WIDTHxHEIGHT, up to 16384 per side.
             camera: Optional actor label of a camera to pilot first; empty uses the viewport.
+            hide_ui: Reserved. HighResShot never renders editor UI; this flag does not change
+                anything yet (pending verification of overlay suppression in UE 5.8).
 
         Returns:
             JSON with summary, capture_id, status ("pending"), camera, resolution, image_path and
             sidecar_path. Poll capture_status with the capture_id.
         """
-        return mcp.capture_viewport(unreal, label, resolution, camera)
+        return mcp.capture_viewport(unreal, label, resolution, camera, hide_ui)
 
     @staticmethod
     @toolset_registry.tool_call
@@ -57,19 +62,23 @@ class CaptureTools(unreal.ToolsetDefinition):
 
     @staticmethod
     @toolset_registry.tool_call
-    def capture_pair(before: str, label: str = "after", resolution: str = "") -> str:
+    def capture_pair(
+        before: str, label: str = "after", resolution: str = "", hide_ui: bool = True
+    ) -> str:
         """Request an "after" capture from the exact camera transform of an earlier capture.
 
         Args:
             before: capture_id or path of the "before" capture under Saved/Captures.
             label: Short description used in the file name of the new capture.
             resolution: WIDTHxHEIGHT; empty reuses the resolution of the before capture.
+            hide_ui: Reserved. HighResShot never renders editor UI; this flag does not change
+                anything yet (pending verification in UE 5.8).
 
         Returns:
             JSON with summary, capture_id, status, camera, resolution, image_path, sidecar_path
             and before_id.
         """
-        return mcp.capture_pair(unreal, before, label, resolution)
+        return mcp.capture_pair(unreal, before, label, resolution, hide_ui)
 
     @staticmethod
     @toolset_registry.tool_call
@@ -79,6 +88,7 @@ class CaptureTools(unreal.ToolsetDefinition):
         tag: str = "",
         resolution: str = "1920x1080",
         cursor: int = 0,
+        hide_ui: bool = True,
     ) -> str:
         """Capture one camera of a series per call, from named cameras or cameras with a tag.
 
@@ -90,12 +100,14 @@ class CaptureTools(unreal.ToolsetDefinition):
             resolution: Image size as WIDTHxHEIGHT.
             cursor: Index of the camera to capture; pass the returned cursor after the previous
                 capture is ready.
+            hide_ui: Reserved. HighResShot never renders editor UI; this flag does not change
+                anything yet (pending verification in UE 5.8).
 
         Returns:
             JSON with summary, cameras, captures (one pending capture) and cursor (null when the
             series is complete).
         """
-        return mcp.capture_series(unreal, label, cameras_json, tag, resolution, cursor)
+        return mcp.capture_series(unreal, label, cameras_json, tag, resolution, cursor, hide_ui)
 
     @staticmethod
     @toolset_registry.tool_call
@@ -117,7 +129,9 @@ class CaptureTools(unreal.ToolsetDefinition):
 
         Returns:
             JSON with summary, capture_id, status, report_path, error_count (recent "Error:" lines
-            of the newest editor log) and markdown (ready to paste into bugs.md).
+            of the newest editor log), mode ("editor" or "pie"), player_location and
+            player_rotation (player 0's pawn during Play In Editor, else null) and markdown
+            (ready to paste into bugs.md).
         """
         return mcp.capture_bug(unreal, title, severity, notes, label, resolution)
 
