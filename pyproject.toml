@@ -1,6 +1,6 @@
 [project]
 name = "trysac-ue-capture-toolset"
-version = "0.1.0"  # static: generated code may rewrite __init__.py (L35)
+version = "0.2.0"  # static: generated code may rewrite __init__.py (L35)
 description = "Pure core and unreal adapter of an Unreal MCP toolset for reproducible captures with JSON sidecars, bug evidence and Markdown contact sheets."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -8,6 +8,7 @@ from .adapter import (
     ListResult,
     PairResult,
     SeriesResult,
+    cameras_with_tag,
     capture_bug,
     capture_pair,
     capture_series,
@@ -37,6 +38,7 @@ __all__ = [
     "__version__",
     "build_bug_markdown",
     "build_contact_sheet_md",
+    "cameras_with_tag",
     "capture_bug",
     "capture_pair",
     "capture_path",
@@ -49,4 +51,4 @@ __all__ = [
     "recent_errors",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

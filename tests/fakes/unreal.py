@@ -31,6 +31,10 @@ class FakeActor:
         self.label = label
         self.location = location
         self.rotation = rotation
+        self.tags: list[str] = []
+
+    def actor_has_tag(self, tag: str) -> bool:
+        return tag in self.tags
 
     def get_actor_label(self) -> str:
         return self.label
@@ -91,6 +95,17 @@ class _EditorLevelLibrary:
         self.owner.piloted.append(actor)
 
 
+class _Paths:
+    def __init__(self, owner: FakeUnreal) -> None:
+        self.owner = owner
+
+    def project_saved_dir(self) -> str:
+        return str(self.owner.saved_dir) + "/"
+
+    def convert_relative_path_to_full(self, path: str) -> str:
+        return str(Path(path).resolve())
+
+
 class FakeUnreal:
     def __init__(self, *, auto_write: bool = False) -> None:
         self.auto_write = auto_write
@@ -107,6 +122,8 @@ class FakeUnreal:
         self.CameraActor = CameraActor
         self.SystemLibrary = _SystemLibrary(self)
         self.EditorLevelLibrary = _EditorLevelLibrary(self)
+        self.saved_dir = "Saved"
+        self.Paths = _Paths(self)
 
     def add_camera(
         self,
@@ -122,3 +139,75 @@ class FakeUnreal:
         )
         self.actors.append(actor)
         return actor
+
+
+class UnrealEditorSubsystem:
+    pass
+
+
+class EditorActorSubsystem:
+    pass
+
+
+class LevelEditorSubsystem:
+    pass
+
+
+class _UnrealEditor58:
+    def __init__(self, owner: FakeUnreal) -> None:
+        self.owner = owner
+        self.legacy = _EditorLevelLibrary(owner)
+
+    def get_editor_world(self) -> FakeWorld:
+        return self.legacy.get_editor_world()
+
+    def get_level_viewport_camera_info(self) -> tuple[Any, ...]:
+        return self.legacy.get_level_viewport_camera_info()
+
+
+class _UnrealEditor58WithSetter(_UnrealEditor58):
+    def set_level_viewport_camera_info(self, location: Vector, rotation: Rotator) -> None:
+        self.owner.viewport_location = location
+        self.owner.viewport_rotation = rotation
+        self.owner.viewport_moves.append((location, rotation))
+
+
+class _Transaction:
+    def __init__(self, owner: FakeUnreal, description: str) -> None:
+        self.owner = owner
+        self.description = description
+
+    def __enter__(self) -> _Transaction:
+        self.owner.transactions.append(self.description)
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+class FakeUnreal58(FakeUnreal):
+    """UE 5.8 flavor: only the editor subsystems, no ``EditorLevelLibrary``."""
+
+    def __init__(self, *, auto_write: bool = False, viewport_setter: bool = True) -> None:
+        super().__init__(auto_write=auto_write)
+        del self.EditorLevelLibrary
+        self.UnrealEditorSubsystem = UnrealEditorSubsystem
+        self.EditorActorSubsystem = EditorActorSubsystem
+        self.LevelEditorSubsystem = LevelEditorSubsystem
+        editor_cls = _UnrealEditor58WithSetter if viewport_setter else _UnrealEditor58
+        legacy = _EditorLevelLibrary(self)
+        self.subsystems: dict[Any, Any] = {
+            UnrealEditorSubsystem: editor_cls(self),
+            EditorActorSubsystem: legacy,
+            LevelEditorSubsystem: legacy,
+        }
+        self.viewport_moves: list[tuple[Vector, Rotator]] = []
+        self.transactions: list[str] = []
+        self.requested: list[Any] = []
+
+    def get_editor_subsystem(self, cls: Any) -> Any:
+        self.requested.append(cls)
+        return self.subsystems.get(cls)
+
+    def ScopedEditorTransaction(self, description: str) -> _Transaction:
+        return _Transaction(self, description)

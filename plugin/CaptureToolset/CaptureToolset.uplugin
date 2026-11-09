@@ -1,0 +1,20 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.2.0",
+	"FriendlyName": "Capture Toolset (Unreal MCP)",
+	"Description": "Unreal MCP toolset: reproducible viewport captures with JSON sidecars, before/after pairs, camera series, bug evidence and Markdown contact sheets. Python only, no compilation.",
+	"Category": "Editor",
+	"CreatedBy": "Miguel Gomez (Trysac)",
+	"CreatedByURL": "https://github.com/Trysac/u802-ue-capture-toolset",
+	"DocsURL": "https://github.com/Trysac/u802-ue-capture-toolset#readme",
+	"EngineVersion": "5.8.0",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Plugins": [
+		{ "Name": "PythonScriptPlugin", "Enabled": true },
+		{ "Name": "ToolsetRegistry", "Enabled": true }
+	]
+}
