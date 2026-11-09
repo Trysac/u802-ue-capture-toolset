@@ -10,7 +10,28 @@ Pure core and Unreal adapter for reproducible captures with JSON sidecars, bug e
 
 Agents building games in Unreal Engine 5.8 need reproducible screenshots for dev logs, bug reports and before/after comparisons. Captures are often ad hoc files with no record of camera, map, quality preset or commit. This library writes a JSON sidecar next to every capture that records that context.
 
-## Install
+## Install in Unreal Engine (the MCP toolset)
+
+1. Build the plugin: `uv run python tools/build_plugin.py` (or download the zip from a release). It
+   creates `dist/CaptureToolset-<version>.zip`.
+2. Unzip it into `<YourProject>/Plugins/` (you get `Plugins/CaptureToolset/`).
+3. In the editor enable **Unreal MCP**, **All Toolsets** and **Capture Toolset**, restart, and
+   turn on *Editor Preferences > General > Model Context Protocol > Auto Start Server*.
+4. Run `ModelContextProtocol.GenerateClientConfig ClaudeCode` in the console (writes `.mcp.json`),
+   then start your agent from the project root. If the editor was already running, run
+   `ModelContextProtocol.RefreshTools`.
+5. The agent finds the toolset `CaptureTools` through `list_toolsets` and calls it with
+   `call_tool`: `capture_viewport`, `capture_status`, `capture_pair`, `capture_series`,
+   `capture_bug`, `list_captures`, `build_contact_sheet_md`. See
+   [docs/AGENT_USAGE.md](docs/AGENT_USAGE.md) and the optional Claude Code skill in
+   [skill/SKILL.md](skill/SKILL.md).
+
+Requirements: Unreal Engine 5.8 with the experimental Unreal MCP and Toolset Registry plugins.
+Python only, nothing to compile. Status: the logic, the MCP layer and the plugin shell are tested
+in CI against a fake `unreal` module; they have not yet been verified inside Unreal. The in-editor
+check is `tests/ue_smoke.py` (see [docs/TESTING.md](docs/TESTING.md)).
+
+## Install as a Python library
 
 ```sh
 pip install trysac-ue-capture-toolset
@@ -35,6 +56,8 @@ print(recent_errors("LogTemp: Error: boom\nLogTemp: Warning: ok"))  # ['LogTemp:
 
 Inside the Unreal editor, pass the `unreal` module as `ue` to the adapter functions (`capture_viewport`, `poll_capture`). These calls are verified only against a fake module, not inside Unreal.
 
+`ue_capture_toolset.mcp` exposes the same operations with flat, JSON-friendly parameters and a JSON string result (first key `summary`; errors come back as `{"summary": "error: ...", "error": {...}}` instead of raising). It takes the Saved folder from `unreal.Paths.project_saved_dir()`, identifies captures by a `capture_id` (image path relative to Saved) and adds `capture_status`, a non-blocking check for the asynchronous `HighResShot`. The plugin's toolset class forwards to it.
+
 ## Public API
 
 Core (pure, no `unreal` import):
@@ -49,9 +72,10 @@ Core (pure, no `unreal` import):
 
 Adapter (each function takes `ue` first):
 
-- `capture_viewport(ue, saved_dir, label="viewport", resolution="1920x1080")` returns a pending `Capture`.
-- `capture_pair(ue, saved_dir, before, ...)` spawns a camera at the transform of a earlier sidecar and requests an "after" capture. The spawned actor stays in the level.
-- `capture_series(ue, saved_dir, label, cameras)` requests one capture per named camera, between 1 and 50 cameras.
+- `capture_viewport(ue, saved_dir, label="viewport", resolution="1920x1080", *, camera=None)` returns a pending `Capture`; with `camera` (an actor label) the viewport pilots that actor first.
+- `capture_pair(ue, saved_dir, before, ...)` requests an "after" capture from the transform of an earlier sidecar: it moves the viewport camera when `UnrealEditorSubsystem.set_level_viewport_camera_info` exists, otherwise it spawns a camera there (undoable transaction). The spawned actor stays in the level.
+- `capture_series(ue, saved_dir, label, cameras, *, cursor=0, limit=50)` requests one capture per named camera (1 to 50 cameras) from `cursor`; `SeriesResult.cursor` is the next index or None.
+- `cameras_with_tag(ue, tag)` returns the sorted labels of actors carrying an actor tag.
 - `capture_bug(ue, saved_dir, title, severity="medium", ...)` captures the viewport and writes a Markdown report next to the image.
 - `list_captures(ue, saved_dir, limit=100)` returns up to 500 sidecars, oldest first, and counts unreadable ones in `skipped`.
 - `poll_capture(capture)` checks once for the file. It raises `capture_timeout` after `timeout_s` (default 30 seconds). It never sleeps.

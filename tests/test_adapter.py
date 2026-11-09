@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
-from fakes.unreal import FakeUnreal
+from fakes.unreal import FakeUnreal, FakeUnreal58, Vector
 
 from ue_capture_toolset import (
     CaptureError,
+    cameras_with_tag,
     capture_bug,
     capture_pair,
     capture_series,
@@ -215,3 +216,51 @@ def test_list_captures(ue: FakeUnreal, saved: Path) -> None:
     assert [s.label for s in newest.captures] == ["s1", "s2"]
     assert newest.skipped == 0
     assert len(list_captures(ue, saved, limit=0).captures) == 1
+
+
+def test_series_cursor_and_limit(ue: FakeUnreal, saved: Path) -> None:
+    for name in ("A", "B", "C"):
+        ue.add_camera(name, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    first = capture_series(ue, saved, "t", ["A", "B", "C"], limit=2, at=AT)
+    assert first.cursor == 2 and len(first.captures) == 2
+    rest = capture_series(ue, saved, "t", ["A", "B", "C"], cursor=2, at=AT)
+    assert rest.cursor is None and rest.captures[0].camera == "C"
+    for kwargs in ({"cursor": 3}, {"cursor": -1}, {"limit": 0}):
+        with pytest.raises(CaptureError) as info:
+            capture_series(ue, saved, "t", ["A"], **kwargs)
+        assert info.value.code == "invalid_series"
+
+
+def test_cameras_with_tag(ue: FakeUnreal) -> None:
+    ue.add_camera("B", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)).tags.append("Folio")
+    ue.add_camera("A", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)).tags.append("Folio")
+    assert cameras_with_tag(ue, "Folio") == ("A", "B")
+    with pytest.raises(CaptureError) as info:
+        cameras_with_tag(ue, "None")
+    assert info.value.code == "camera_not_found"
+
+
+def test_viewport_from_camera_works_on_ue58(saved: Path) -> None:
+    ue = FakeUnreal58()
+    ue.add_camera("Cam", (1.0, 2.0, 3.0), (4.0, 5.0, 6.0))
+    capture = capture_viewport(ue, saved, camera="Cam", at=AT)
+    sidecar = load_sidecar(capture.sidecar_path)
+    assert sidecar.camera == "Cam" and sidecar.location == (1.0, 2.0, 3.0)
+    assert ue.piloted[0].get_actor_label() == "Cam"
+    assert not hasattr(ue, "EditorLevelLibrary")
+
+
+def test_pair_on_ue58_reproduces_transform_via_viewport(saved: Path) -> None:
+    ue = FakeUnreal58()
+    before = capture_viewport(ue, saved, label="before", at=AT)
+    prior = load_sidecar(before.sidecar_path)
+    ue.viewport_location = Vector(0.0, 0.0, 0.0)
+    result = capture_pair(ue, saved, before.sidecar_path, at=AT + timedelta(seconds=1))
+    after = load_sidecar(result.after.sidecar_path)
+    for got, want in zip(
+        after.location + after.rotation, prior.location + prior.rotation, strict=True
+    ):
+        assert abs(got - want) < 1e-3
+    moved_location, moved_rotation = ue.viewport_moves[0]
+    assert (moved_location.x, moved_rotation.yaw) == (prior.location[0], prior.rotation[1])
+    assert ue.actors == [] and result.camera == "viewport"

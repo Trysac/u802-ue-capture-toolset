@@ -7,13 +7,16 @@ Provide reproducible Unreal Engine 5.8 captures for agents, each with a JSON sid
 ## Scope
 
 - In scope: resolution parsing, unique time-sortable capture paths, sidecars, reading git HEAD without running git, scanning logs for errors, Markdown rendering, and a thin adapter over the Unreal Python API that takes the `unreal` module as an argument.
-- Out of scope: video recording, image editing, uploads, the Unreal plugin packaging (`.uplugin`, `ToolsetDefinition`), and any in-engine testing. Adapter behaviour is verified only against a fake module.
+- In scope since 0.2.0: the Unreal plugin (`.uplugin`, `ToolsetDefinition` shell), the `mcp` layer with `capture_status`, cameras by tag, series with a cursor, and the subsystem compatibility layer.
+- Out of scope: video recording, image editing and uploads. Adapter and plugin behaviour is verified only against a fake module until the in-editor check is run.
 
 ## Timeline
 
 | Date | Event |
 |---|---|
-| 2026 | Repository created from the factory utility template. |
+| 2026-11-08 | Repository created from the factory utility template; factory run (core + adapter). |
+| 2026-11-08 | Interactive session (Claude Code): plugin shell, `mcp` layer, `capture_status`, compat layer, build tool, smoke test, skill, docs (0.2.0). Not yet verified inside Unreal. |
+| pending | In-editor verification on UE 5.8 (`docs/TESTING.md`): date, engine version, smoke result. |
 
 ## Effort metrics
 
