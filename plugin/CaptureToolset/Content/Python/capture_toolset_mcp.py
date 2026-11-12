@@ -22,8 +22,8 @@ class CaptureTools(unreal.ToolsetDefinition):
     return at once with a capture_id; call capture_status until it is ready before the next capture.
     """
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def capture_viewport(
         label: str = "viewport",
         resolution: str = "1920x1080",
@@ -45,8 +45,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.capture_viewport(unreal, label, resolution, camera, hide_ui)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def capture_status(capture: str, timeout_s: float = 30.0) -> str:
         """Check once, without waiting, whether captures have been written to disk.
 
@@ -60,8 +60,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.capture_status(unreal, capture, timeout_s)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def capture_pair(
         before: str, label: str = "after", resolution: str = "", hide_ui: bool = True
     ) -> str:
@@ -80,8 +80,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.capture_pair(unreal, before, label, resolution, hide_ui)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def capture_series(
         label: str,
         cameras_json: str = "",
@@ -109,8 +109,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.capture_series(unreal, label, cameras_json, tag, resolution, cursor, hide_ui)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def capture_bug(
         title: str,
         severity: str = "medium",
@@ -135,8 +135,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.capture_bug(unreal, title, severity, notes, label, resolution)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def list_captures(limit: int = 100, since: str = "", label: str = "") -> str:
         """List the newest captures under Saved/Captures, oldest first (read-only).
 
@@ -151,8 +151,8 @@ class CaptureTools(unreal.ToolsetDefinition):
         """
         return mcp.list_captures(unreal, limit, since, label)
 
-    @staticmethod
     @toolset_registry.tool_call
+    @staticmethod
     def build_contact_sheet_md(captures_json: str, title: str = "Contact sheet") -> str:
         """Render a Markdown contact sheet that links capture images with their metadata.
 
